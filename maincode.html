@@ -3,177 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Math Calculator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.0.0/math.min.js"></script>
+    <title>AI-Powered Calculator</title>
     <style>
-        * {
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2e2e2e;
+            color: #fff;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: #1e1e1e;
-            font-family: 'Roboto', sans-serif;
-            color: #fff;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background-color: #2a2a2a;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .header h1 {
-            text-align: center;
-            color: #00eaff;
-            margin-bottom: 20px;
-        }
-
-        .calculator {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .input-field {
-            width: 75%;
-            padding: 10px;
+        #calculator {
             background-color: #333;
-            border: 1px solid #444;
-            color: #fff;
-            border-radius: 6px;
-            font-size: 16px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 500px;
         }
 
-        .send-btn {
-            background-color: #00eaff;
-            color: #fff;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .send-btn:hover {
-            background-color: #0088cc;
-        }
-
-        .categories {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .category-btn {
+        #output {
             background-color: #444;
             color: #fff;
-            padding: 10px 20px;
+            font-size: 1.5em;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: right;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input {
+            width: 100%;
+            background-color: #555;
+            color: #fff;
+            font-size: 1.5em;
+            padding: 10px;
+            border-radius: 5px;
             border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
+            margin-bottom: 20px;
         }
 
-        .category-btn:hover {
-            background-color: #00eaff;
-        }
-
-        .output {
-            background-color: #333;
+        button {
+            background-color: #555;
+            color: white;
+            border: none;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            font-size: 1.2em;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 5px;
         }
 
-        .output h2 {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #00eaff;
+        button:hover {
+            background-color: #777;
         }
 
-        .output p {
-            font-size: 18px;
+        #verify {
+            background-color: #28a745;
+        }
+
+        #clear {
+            background-color: #dc3545;
+        }
+
+        #verify:hover, #clear:hover {
+            background-color: #666;
+        }
+
+        #output-text {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #ddd;
+        }
+
+        #loader {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Advanced Math Calculator</h1>
-        </div>
-        <div class="calculator">
-            <input type="text" id="inputField" placeholder="Enter your equation..." class="input-field">
-            <button class="send-btn" id="sendBtn">Send</button>
-        </div>
-        <div class="categories">
-            <button class="category-btn">Arithmetic</button>
-            <button class="category-btn">Algebra</button>
-            <button class="category-btn">Geometry</button>
-            <button class="category-btn">Trigonometry</button>
-            <button class="category-btn">Calculus</button>
-        </div>
-        <div class="output">
-            <h2>Result</h2>
-            <p id="outputText">Enter an equation to get started...</p>
-        </div>
+
+<div id="calculator">
+    <div id="output"></div>
+    <input type="text" id="expression" placeholder="Enter math expression" />
+    <button id="verify" onclick="verifyExpression()">Verify AI</button>
+    <button id="clear" onclick="clearOutput()">Clear</button>
+    <div id="output-text"></div>
+    <div id="loader">
+        <p>Verifying with AI...</p>
     </div>
+</div>
 
-    <script>
-        document.getElementById('sendBtn').addEventListener('click', function() {
-            const input = document.getElementById('inputField').value;
-            if (input.trim() === '') {
-                document.getElementById('outputText').textContent = 'Please enter an equation!';
-            } else {
-                try {
-                    // Handle complex number support using Math.js
-                    let result = math.evaluate(input);
-                    if (result instanceof math.Complex) {
-                        result = result.toString();  // Convert complex number to string for display
-                    }
-                    document.getElementById('outputText').textContent = `Result: ${result}`;
-                } catch (error) {
-                    document.getElementById('outputText').textContent = 'Invalid equation or syntax error!';
-                }
-            }
-        });
+<script>
+    const expressionInput = document.getElementById('expression');
 
-        // Category Buttons Event Listeners (Optional for future feature implementations)
-        document.querySelectorAll('.category-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const category = button.textContent;
-                document.getElementById('outputText').textContent = `Category: ${category} selected.`;
-            });
-        });
-
-        // AI Integration (Optional: Use this function for AI-based suggestions in future)
-        async function getAISuggestions(query) {
-            const response = await fetch('https://api.openai.com/v1/completions', {
-                method: 'POST',
-                headers: {
-                    Authorization: 'Bearer id_here',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    prompt: query,
-                    max_tokens: 100
-                })
-            });
-
-            const data = await response.json();
-            return data.choices[0].text.trim();
+    async function calculateExpression(expression) {
+        try {
+            const result = eval(expression); // Simple eval, replace with complex parser if needed
+            document.getElementById('output').textContent = result;
+            return result;
+        } catch (e) {
+            document.getElementById('output').textContent = 'Error';
+            return null;
         }
-    </script>
+    }
+
+    async function verifyExpression() {
+        const userResult = await calculateExpression(expressionInput.value);
+
+        if (userResult === null) {
+            return;
+        }
+
+        const verificationText = `Verify the result of the expression: ${expressionInput.value}`;
+
+        // Show loader
+        document.getElementById('loader').style.display = 'block';
+
+        // Send expression to Hugging Face API for verification
+        const response = await fetch('/api/verify-huggingface', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: verificationText })
+        });
+
+        const data = await response.json();
+
+        // Hide loader
+        document.getElementById('loader').style.display = 'none';
+
+        // Check AI result
+        const aiResult = data.result;
+
+        if (parseFloat(userResult) === parseFloat(aiResult)) {
+            document.getElementById('output-text').textContent = `AI Verified: ${aiResult}`;
+        } else {
+            document.getElementById('output-text').textContent = `Mismatch: Local result is ${userResult}, AI says ${aiResult}`;
+        }
+    }
+
+    function clearOutput() {
+        expressionInput.value = '';
+        document.getElementById('output').textContent = '';
+        document.getElementById('output-text').textContent = '';
+    }
+</script>
+
 </body>
 </html>
+   
