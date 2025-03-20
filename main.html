@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Math Solver</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@9.4.4/dist/math.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+
+<div class="flex justify-center items-center min-h-screen">
+    <div class="bg-gray-800 p-8 rounded-lg w-full max-w-md">
+        <h1 class="text-3xl font-bold text-center">AI Math Solver</h1>
+
+        <input id="expression" type="text" class="w-full p-2 mt-4 rounded-lg" placeholder="Enter math problem..." oninput="debounceCalculation()">
+        
+        <button onclick="calculate()" class="w-full bg-blue-500 p-2 mt-4 rounded-lg text-white">Solve</button>
+
+        <div id="result" class="mt-4 text-lg font-bold"></div>
+        <div id="explanation" class="text-gray-400 mt-2"></div>
+        <div id="graph" class="mt-4"></div>
+        <div id="debug" class="text-gray-400 mt-4 text-sm"></div>
+
+        <!-- API Key Input -->
+        <div class="mt-6">
+            <input id="apiKeyInput" type="text" class="w-full p-2 rounded-lg bg-gray-700 text-white" placeholder="Enter Hugging Face API Key">
+            <button onclick="saveApiKey()" class="w-full bg-green-500 p-2 mt-2 rounded-lg text-white">Save API Key</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let timeout;
+    let API_KEY = localStorage.getItem("huggingface_api_key");
+
+    // Save API Key to localStorage
+    function saveApiKey() {
+        const apiKey = document.getElementById("apiKeyInput").value.trim();
+        if (apiKey) {
+            localStorage.setItem("huggingface_api_key", apiKey);
+            API_KEY = apiKey;
+            alert("✅ API Key saved successfully!");
+        } else {
+            alert("⚠️ Please enter a valid API Key.");
+        }
+    }
+
+    // Function to debounce calculation input
+    function debounceCalculation() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            calculate();
+        }, 500);
+    }
+
+    // Main calculation function
+    async function calculate() {
+        const expression = document.getElementById("expression").value.trim();
+        const debugElement = document.getElementById("debug");
+
+        try {
+            validateExpression(expression);
+            let result = '';
+
+            // Try using math.js first
+            try {
+                result = evalExpression(expression);
+            } catch (mathError) {
+                result = await fetchAIResult(expression); // Use AI if math.js fails
+            }
+
+            document.getElementById("result").innerHTML = `Result: ${result}`;
+            document.getElementById("explanation").innerText = `Expression: ${expression}`;
+            debugElement.innerText = ""; 
+
+            if (expression.includes('x')) {
+                plotGraph(expression);
+            } else {
+                document.getElementById("graph").innerHTML = "";
+            }
+
+        } catch (error) {
+            document.getElementById("result").innerHTML = "Error!";
+            document.getElementById("explanation").innerText = "Invalid Expression!";
+            debugElement.innerText = error.message;
+        }
+    }
+
+    // Evaluate expression using math.js
+    function evalExpression(expr) {
+        expr = expr.replace(/\^/g, '**');  // Convert ^ to ** for math.js compatibility
+        return math.evaluate(expr);
+    }
+
+    // Validate expression to prevent invalid characters
+    function validateExpression(expr) {
+        const validPattern = /^[0-9+\-*/^().x\s]+$/;
+        if (!validPattern.test(expr)) {
+            throw new Error("Invalid characters in expression.");
+        }
+    }
+
+    // Function to fetch AI results using Hugging Face API
+    async function fetchAIResult(query) {
+        const API_KEY = localStorage.getItem("huggingface_api_key"); // Retrieve API key from localStorage
+        if (!API_KEY) {
+            return "⚠️ No API Key Found! Please enter it above.";
+        }
+
+        try {
+            const response = await axios.post(
+                "https://api-inference.huggingface.co/models/google/gemini",
+                { inputs: query },
+                { headers: { Authorization: `Bearer ${API_KEY}` } }
+            );
+
+            if (response.data && response.data.length > 0) {
+                return response.data[0].generated_text;
+            } else {
+                throw new Error("AI did not return a response.");
+            }
+        } catch (error) {
+            console.error("AI API Error:", error);
+            return "⚠️ AI error. Please check API key or try again.";
+        }
+    }
+
+    // Function to plot a graph for equations involving 'x'
+    function plotGraph(equation) {
+        const xValues = [];
+        const yValues = [];
+        for (let x = -10; x <= 10; x += 0.1) {
+            try {
+                const y = evalExpression(equation.replace(/x/g, x));
+                xValues.push(x);
+                yValues.push(y);
+            } catch (err) {
+                console.error("Error plotting graph:", err);
+            }
+        }
+
+        Plotly.newPlot('graph', [{ x: xValues, y: yValues, mode: 'lines', type: 'scatter' }], {
+            title: equation,
+            xaxis: { title: 'X' },
+            yaxis: { title: 'Y' }
+        });
+    }
+</script>
+
+</body>
+</html>
